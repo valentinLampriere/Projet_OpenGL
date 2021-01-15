@@ -2,8 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <glm/vec3.hpp>
 #include <glm/matrix.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <vector>
 #include <iostream>
@@ -19,6 +17,7 @@
 
 #include "stl.h"
 #include "texture.h"
+#include "../controls.h"
 
 static void error_callback(int /*error*/, const char* description)
 {
@@ -269,7 +268,8 @@ int main(void) {
 	glEnable(GL_DEPTH_TEST);
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS);
-
+	// Cull triangles which normal is not towards the camera
+	glEnable(GL_CULL_FACE);
 
 	GLuint image = loadBMP_custom("./img/uvtemplate.bmp");
 
@@ -278,8 +278,6 @@ int main(void) {
 
 	while (!glfwWindowShouldClose(window)) {
 		float u_time = glfwGetTime();
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -291,20 +289,13 @@ int main(void) {
 		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-		glm::mat4 Projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-		
-		// Camera matrix
-		glm::mat4 View = glm::lookAt(
-			glm::vec3(4, 3, -3),
-			glm::vec3(0, 0, 0),
-			glm::vec3(0, 1, 0)
-		);
-		// Model matrix : an identity matrix (model will be at the origin)
-		glm::mat4 Model = glm::mat4(1.0f);
 
-		// Our ModelViewProjection : multiplication of our 3 matrices
-		glm::mat4 mvp = Projection * View * Model;
+		computeMatricesFromInputs(window);
+		glm::mat4 ProjectionMatrix = getProjectionMatrix();
+		glm::mat4 ViewMatrix = getViewMatrix();
+		glm::mat4 ModelMatrix = glm::mat4(1.0);
+		glm::mat4 mvp = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvp[0][0]);
 
