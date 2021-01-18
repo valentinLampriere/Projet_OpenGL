@@ -3,8 +3,10 @@
 out vec4 color;
 
 in vec2 UV;
-uniform sampler2D myTextureSampler;
+
+uniform mat4 MVP;
+uniform sampler2D cubeTexture;
 
 void main() {
-    color = vec4(texture(myTextureSampler, UV).rgb, 1);
+    color = vec4(texture(cubeTexture, UV).rgb, 1);
 }

@@ -41,7 +41,9 @@ void APIENTRY opengl_error_callback(GLenum source,
 	std::cout << message << std::endl;
 }
 
-GLuint loadBMP_custom(char* path) {
+
+
+GLuint loadBMP_custom(const char* path) {
 	
 	// Data read from the header of the BMP file
 	unsigned char header[54]; // Each BMP file begins by a 54-bytes header
@@ -57,12 +59,12 @@ GLuint loadBMP_custom(char* path) {
 
 	if (fread(header, 1, 54, file) != 54) { // If not 54 bytes read : problem
 		printf("Not a correct BMP file\n");
-		return false;
+		return 0;
 	}
 
 	if (header[0] != 'B' || header[1] != 'M') {
 		printf("Not a correct BMP file\n");
-		return false;
+		return 0;
 	}
 
 	// Read ints from the byte array
@@ -101,8 +103,10 @@ GLuint loadBMP_custom(char* path) {
 	// Generate mipmaps, by the way.
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	return true;
+	return textureID;
 }
+
+
 
 int main(void) {
 	GLFWwindow* window;
@@ -144,15 +148,6 @@ int main(void) {
 
 	glUseProgram(program);
 	
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
-
-	static const GLfloat g_triangleVertex_buffer_data[] = {
-		-1.5f, -1.5f, -1.25f,
-		0.0f, 1.5f, -1.25f,
-		1.5f, -1.5f, -1.25f
-	};
 
 	static const GLfloat g_cubeVertex_buffer_data[] = {
 	-1.0f,-1.0f,-1.0f,
@@ -232,37 +227,24 @@ int main(void) {
 	0.667979f, 1.0f - 0.335851f
 	};
 
-	// One color for each vertex. They were generated randomly.
-	static GLfloat g_color_buffer_data[12 * 3 * 3];
-	std::random_device rd;
-	std::mt19937 e2(rd());
-	std::uniform_real_distribution<> dist(0.0f, 1.0f);
-	for (int v = 0; v < 12 * 3; v++) {
-		g_color_buffer_data[3 * v + 0] = dist(e2);
-		g_color_buffer_data[3 * v + 1] = dist(e2);
-		g_color_buffer_data[3 * v + 2] = dist(e2);
-	}
+
+	GLuint Texture = loadBMP_custom("./img/uvtemplate.bmp");
+	GLuint TextureID = glGetUniformLocation(program, "cubeTexture");
 
 	// Buffers //
-	GLuint cubeVertexbuffer;
-	// Generate 1 buffer, put the resulting identifier in vertexbuffer
-	glGenBuffers(1, &cubeVertexbuffer);
-	// The following commands will talk about our 'vertexbuffer' buffer
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVertexbuffer);
-	// Give our vertices to OpenGL.
+	GLuint VertexArrayID;
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
+
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_cubeVertex_buffer_data), g_cubeVertex_buffer_data, GL_STATIC_DRAW);
 
-	GLuint triangleVertexbuffer;
-	glGenBuffers(1, &triangleVertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, triangleVertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_triangleVertex_buffer_data), g_triangleVertex_buffer_data, GL_STATIC_DRAW);
-
-	GLuint colorbuffer;
-	glGenBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-
-	GLuint MatrixID = glGetUniformLocation(program, "MVP");
+	GLuint uvbuffer;
+	glGenBuffers(1, &uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -271,9 +253,8 @@ int main(void) {
 	// Cull triangles which normal is not towards the camera
 	glEnable(GL_CULL_FACE);
 
-	GLuint image = loadBMP_custom("./img/uvtemplate.bmp");
 
-
+	GLuint MatrixID = glGetUniformLocation(program, "MVP");
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -281,13 +262,18 @@ int main(void) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, Texture);
+		glUniform1i(TextureID, 0);
+
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, cubeVertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 
 		computeMatricesFromInputs(window);
@@ -300,18 +286,11 @@ int main(void) {
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvp[0][0]);
 
 		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 6*2*3 + 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+		glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
+
 		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
 
-
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, triangleVertexbuffer);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
-		glDisableVertexAttribArray(0);
 		
 		// Swap buffers
 		glfwSwapBuffers(window);

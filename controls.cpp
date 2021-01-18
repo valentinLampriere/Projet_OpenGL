@@ -13,7 +13,8 @@ float verticalAngle = 0.0f;
 // Initial Field of View
 float initialFoV = 45.0f;
 
-float speed = 5.0f; // 3 units / second
+float speed = 4.0f;
+float verticalSpeed = 2.0f;
 float mouseSpeed = 0.015f;
 
 float lastTime = 0;
@@ -25,8 +26,12 @@ glm::mat4 getProjectionMatrix() {
 	return ProjectionMatrix;
 }
 
+glm::vec3 getOrbitPos(glm::vec3 origin, glm::vec3 distance, float speed, float iTime) {
+	return glm::vec3(cos(iTime * speed) * distance.x + origin.x, sin(iTime * speed) * distance.y + origin.y, sin(iTime * speed) * distance.z + origin.z);
+}
+
 void computeMatricesFromInputs(GLFWwindow* window) {
-	double currentTime = glfwGetTime();
+	float currentTime = (float) glfwGetTime();
 	float deltaTime = float(currentTime - lastTime);
 	// Get mouse position
 	double xpos, ypos;
@@ -42,6 +47,13 @@ void computeMatricesFromInputs(GLFWwindow* window) {
 	horizontalAngle += mouseSpeed * deltaTime * float(width / 2 - xpos);
 	verticalAngle += mouseSpeed * deltaTime * float(height / 2 - ypos);
 
+	if (verticalAngle < -0.5f) {
+		verticalAngle = -0.5f;
+	} else if (verticalAngle > 0.5f) {
+		verticalAngle = 0.5f;
+	}
+
+
 	// Direction : Spherical coordinates to Cartesian coordinates conversion
 	glm::vec3 direction(
 		cos(verticalAngle) * sin(horizontalAngle),
@@ -56,21 +68,29 @@ void computeMatricesFromInputs(GLFWwindow* window) {
 	);
 	glm::vec3 up = glm::cross(right, direction);
 
-	// Move forward
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+
+	glm::vec3 origin = glm::vec3(0, 0, 0);
+	position = getOrbitPos(origin, glm::vec3(10, 0, 10), 0.5, currentTime);
+	direction = origin - position;
+		
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		position += direction * deltaTime * speed;
 	}
-	// Move backward
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		position -= direction * deltaTime * speed;
 	}
-	// Strafe right
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		position += right * deltaTime * speed;
 	}
-	// Strafe left
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		position -= right * deltaTime * speed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		position += up * deltaTime * verticalSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		position -= up * deltaTime * verticalSpeed;
 	}
 
 	float FoV = initialFoV;
