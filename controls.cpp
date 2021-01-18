@@ -69,9 +69,9 @@ void computeMatricesFromInputs(GLFWwindow* window) {
 	glm::vec3 up = glm::cross(right, direction);
 
 
-	glm::vec3 origin = glm::vec3(0, 0, 0);
+	/*glm::vec3 origin = glm::vec3(0, 0, 0);
 	position = getOrbitPos(origin, glm::vec3(10, 0, 10), 0.5, currentTime);
-	direction = origin - position;
+	direction = origin - position;*/
 		
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
