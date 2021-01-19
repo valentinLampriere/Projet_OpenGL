@@ -47,10 +47,10 @@ void computeMatricesFromInputs(GLFWwindow* window) {
 	horizontalAngle += mouseSpeed * deltaTime * float(width / 2 - xpos);
 	verticalAngle += mouseSpeed * deltaTime * float(height / 2 - ypos);
 
-	if (verticalAngle < -0.5f) {
-		verticalAngle = -0.5f;
-	} else if (verticalAngle > 0.5f) {
-		verticalAngle = 0.5f;
+	if (verticalAngle < -1) {
+		verticalAngle = -1;
+	} else if (verticalAngle > 1) {
+		verticalAngle = 1;
 	}
 
 

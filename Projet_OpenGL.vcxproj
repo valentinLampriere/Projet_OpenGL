@@ -106,6 +106,7 @@
   <ItemGroup>
     <ClCompile Include="controls.cpp" />
     <ClCompile Include="external\glad\src\glad.c" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\shader.cpp" />
     <ClCompile Include="source\stl.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="external\glad\include\glad\glad.h" />
     <ClInclude Include="external\glad\include\khr\khrplatform.h" />
     <ClInclude Include="external\tinyply\include\tinyply.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="source\shader.h" />
     <ClInclude Include="source\stl.h" />
     <ClInclude Include="source\texture.h" />

@@ -16,6 +16,7 @@
 //#include <tinyply.h>
 
 #include "stl.h"
+#include "../Light.h"
 #include "texture.h"
 #include "../controls.h"
 
@@ -185,6 +186,10 @@ bool loadOBJ(char* path, std::vector<glm::vec3>& out_vertices, std::vector<glm::
 
 
 int main(void) {
+
+	int width = 1024;
+	int height = 768;
+
 	GLFWwindow* window;
 	glfwSetErrorCallback(error_callback);
 
@@ -197,7 +202,7 @@ int main(void) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
-	window = glfwCreateWindow(1024, 768, "Tutorials", NULL, NULL);
+	window = glfwCreateWindow(width, height, "Tutorials", NULL, NULL);
 
 	if (!window) {
 		glfwTerminate();
@@ -228,11 +233,20 @@ int main(void) {
 	GLuint Texture = loadBMP_custom("./img/uvtemplate.bmp");
 	GLuint TextureID = glGetUniformLocation(program, "cubeTexture");
 
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec2> uvs;
-	std::vector<glm::vec3> normals; // Won't be used at the moment.
-	if (! loadOBJ("resources/models/monkey.obj", vertices, uvs, normals)) {
+	std::vector<glm::vec3> monkey_vertices;
+	std::vector<glm::vec2> monkey_uvs;
+	std::vector<glm::vec3> monkey_normals; // Won't be used at the moment.
+	if (!loadOBJ("resources/models/monkey.obj", monkey_vertices, monkey_uvs, monkey_normals)) {
 		return -1;
+	}
+	std::vector<glm::vec3> cube_vertices;
+	std::vector<glm::vec2> cube_uvs;
+	std::vector<glm::vec3> cube_normals; // Won't be used at the moment.
+	if (!loadOBJ("resources/models/cube.obj", cube_vertices, cube_uvs, cube_normals)) {
+		return -1;
+	}
+	for (int i = 0; i < cube_vertices.size(); i++) {
+		cube_vertices[i] += glm::vec3(0, -2, 0);
 	}
 
 	// Buffers //
@@ -240,20 +254,38 @@ int main(void) {
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
 
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+#pragma region monkey buffers
+	GLuint monkey_vertexbuffer;
+	glGenBuffers(1, &monkey_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, monkey_vertices.size() * sizeof(glm::vec3), &monkey_vertices[0], GL_STATIC_DRAW);
 
-	GLuint uvbuffer;
-	glGenBuffers(1, &uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+	GLuint monkey_uvbuffer;
+	glGenBuffers(1, &monkey_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, monkey_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, monkey_uvs.size() * sizeof(glm::vec2), &monkey_uvs[0], GL_STATIC_DRAW);
 
-	GLuint normalbuffer;
-	glGenBuffers(1, &normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+	GLuint monkey_normalbuffer;
+	glGenBuffers(1, &monkey_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, monkey_normals.size() * sizeof(glm::vec3), &monkey_normals[0], GL_STATIC_DRAW);
+#pragma endregion
+#pragma region cube buffers
+	GLuint cube_vertexbuffer;
+	glGenBuffers(1, &cube_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, cube_vertices.size() * sizeof(glm::vec3), &cube_vertices[0], GL_STATIC_DRAW);
+
+	GLuint cube_uvbuffer;
+	glGenBuffers(1, &cube_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, cube_uvs.size() * sizeof(glm::vec2), &cube_uvs[0], GL_STATIC_DRAW);
+
+	GLuint cube_normalbuffer;
+	glGenBuffers(1, &cube_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, cube_normals.size() * sizeof(glm::vec3), &cube_normals[0], GL_STATIC_DRAW);
+#pragma endregion
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -262,32 +294,64 @@ int main(void) {
 	// Cull triangles which normal is not towards the camera
 	glEnable(GL_CULL_FACE);
 
+	glClearColor(0.2, 0.2, 0.3, 0);
 
 	GLuint MatrixID = glGetUniformLocation(program, "MVP");
 
+	GLuint ModelMatrixID = glGetUniformLocation(program, "M");
+	GLuint ViewMatrixID = glGetUniformLocation(program, "V");
+
+	Light light = Light(glm::vec3(2, 10, 5), glm::vec3(0.9, 0.9, 0.8), 300);
+	GLuint LightPositionID = glGetUniformLocation(program, "lightPosition");
+	GLuint LightColorID = glGetUniformLocation(program, "lightColor");
+	GLuint LightIntensityID = glGetUniformLocation(program, "lightIntensity");
+
+
+	glfwSetCursorPos(window, width / 2, height / 2);
 
 	while (!glfwWindowShouldClose(window)) {
 		float u_time = glfwGetTime();
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, Texture);
 		glUniform1i(TextureID, 0);
 
+#pragma region monkey
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, monkey_uvbuffer);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+
+		// Draw the triangle !
+		glDrawArrays(GL_TRIANGLES, 0, monkey_vertices.size() * sizeof(glm::vec3));
+#pragma endregion
+
+#pragma region cube
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, cube_vertexbuffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, cube_uvbuffer);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, cube_normalbuffer);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		// Draw the triangle !
+		glDrawArrays(GL_TRIANGLES, 0, cube_vertices.size() * sizeof(glm::vec3));
+#pragma endregion
 
 		computeMatricesFromInputs(window);
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
@@ -296,10 +360,14 @@ int main(void) {
 		glm::mat4 mvp = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 
-		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvp[0][0]);
 
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size() * sizeof(glm::vec3));
+
+		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvp[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+		glUniform3f(LightPositionID, light.position.x, light.position.y, light.position.z);
+		glUniform3f(LightColorID, light.color.r, light.color.g, light.color.b);
+		glUniform1f(LightIntensityID, light.intensity);
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
