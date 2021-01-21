@@ -102,6 +102,9 @@
     <ClCompile>
       <AdditionalIncludeDirectories>C:\Users\Valentin L\Documents\M2\Simulation\Projet_OpenGL\external\glad\include;C:\Users\Valentin L\Documents\M2\Simulation\Projet_OpenGL\external\CImg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="controls.cpp" />
@@ -111,6 +114,7 @@
     <ClCompile Include="source\shader.cpp" />
     <ClCompile Include="source\stl.cpp" />
     <ClCompile Include="source\texture.cpp" />
+    <ClCompile Include="vbo_indexer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="controls.h" />
@@ -139,6 +143,7 @@
     <ClInclude Include="source\shader.h" />
     <ClInclude Include="source\stl.h" />
     <ClInclude Include="source\texture.h" />
+    <ClInclude Include="vbo_indexer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -11,6 +11,7 @@
 #include <string>
 
 #include "shader.h"
+#include "../vbo_indexer.h"
 
 #define TINYPLY_IMPLEMENTATION
 //#include <tinyply.h>
@@ -19,6 +20,8 @@
 #include "../Light.h"
 #include "texture.h"
 #include "../controls.h"
+
+using namespace std;
 
 static void error_callback(int /*error*/, const char* description)
 {
@@ -233,12 +236,6 @@ int main(void) {
 	GLuint Texture = loadBMP_custom("./img/uvtemplate.bmp");
 	GLuint TextureID = glGetUniformLocation(program, "cubeTexture");
 
-	std::vector<glm::vec3> monkey_vertices;
-	std::vector<glm::vec2> monkey_uvs;
-	std::vector<glm::vec3> monkey_normals; // Won't be used at the moment.
-	if (!loadOBJ("resources/models/monkey.obj", monkey_vertices, monkey_uvs, monkey_normals)) {
-		return -1;
-	}
 	std::vector<glm::vec3> cube_vertices;
 	std::vector<glm::vec2> cube_uvs;
 	std::vector<glm::vec3> cube_normals; // Won't be used at the moment.
@@ -255,6 +252,24 @@ int main(void) {
 	glBindVertexArray(VertexArrayID);
 
 #pragma region monkey buffers
+
+	std::vector<glm::vec3> inmonkey_vertices;
+	std::vector<glm::vec2> inmonkey_uvs;
+	std::vector<glm::vec3> inmonkey_normals;
+
+	std::vector<glm::vec3> monkey_vertices;
+	std::vector<glm::vec2> monkey_uvs;
+	std::vector<glm::vec3> monkey_normals;
+
+	std::vector<unsigned short> indicesMonkey;
+
+	if (!loadOBJ("resources/models/monkey.obj", inmonkey_vertices, inmonkey_uvs, inmonkey_normals)) {
+		std::cout << "Can't load monkey :(";
+		return -1;
+	}
+
+	indexVBO(inmonkey_vertices, inmonkey_uvs, inmonkey_normals, indicesMonkey, monkey_vertices, monkey_uvs, monkey_normals);
+
 	GLuint monkey_vertexbuffer;
 	glGenBuffers(1, &monkey_vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
@@ -269,6 +284,12 @@ int main(void) {
 	glGenBuffers(1, &monkey_normalbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, monkey_normals.size() * sizeof(glm::vec3), &monkey_normals[0], GL_STATIC_DRAW);
+
+	GLuint elementbufferMonkey;
+	glGenBuffers(1, &elementbufferMonkey);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbufferMonkey);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesMonkey.size() * sizeof(unsigned short), &indicesMonkey[0], GL_STATIC_DRAW);
+
 #pragma endregion
 #pragma region cube buffers
 	GLuint cube_vertexbuffer;
@@ -336,7 +357,17 @@ int main(void) {
 
 
 		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, monkey_vertices.size() * sizeof(glm::vec3));
+		//glDrawArrays(GL_TRIANGLES, 0, monkey_vertices.size() * sizeof(glm::vec3));
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbufferMonkey);
+
+		// Draw the triangles !
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			indicesMonkey.size(),    // count
+			GL_UNSIGNED_SHORT,   // type
+			(void*)0           // element array buffer offset
+		);
 #pragma endregion
 
 #pragma region cube
