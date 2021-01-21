@@ -87,10 +87,10 @@ void computeMatricesFromInputs(GLFWwindow* window) {
 		position -= right * deltaTime * speed;
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		position += up * deltaTime * verticalSpeed;
+		position += glm::vec3(0, 1, 0) * deltaTime * verticalSpeed;
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		position -= up * deltaTime * verticalSpeed;
+		position -= glm::vec3(0, 1, 0) * deltaTime * verticalSpeed;
 	}
 
 	float FoV = initialFoV;

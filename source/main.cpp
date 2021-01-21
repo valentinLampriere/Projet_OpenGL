@@ -315,6 +315,10 @@ int main(void) {
 	// Cull triangles which normal is not towards the camera
 	glEnable(GL_CULL_FACE);
 
+	// Enable transparencies
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+
 	glClearColor(0.2, 0.2, 0.3, 0);
 
 	GLuint MatrixID = glGetUniformLocation(program, "MVP");
