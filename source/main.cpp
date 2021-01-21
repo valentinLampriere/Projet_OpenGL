@@ -301,13 +301,16 @@ int main(void) {
 	GLuint ModelMatrixID = glGetUniformLocation(program, "M");
 	GLuint ViewMatrixID = glGetUniformLocation(program, "V");
 
-	Light light = Light(glm::vec3(2, 10, 5), glm::vec3(0.9, 0.9, 0.8), 300);
+	Light light = Light(glm::vec3(2, 10, 5), glm::vec3(0.9, 0.9, 0.8), 200);
 	GLuint LightPositionID = glGetUniformLocation(program, "lightPosition");
 	GLuint LightColorID = glGetUniformLocation(program, "lightColor");
 	GLuint LightIntensityID = glGetUniformLocation(program, "lightIntensity");
 
 
 	glfwSetCursorPos(window, width / 2, height / 2);
+	
+	// Hide the mouse and enable unlimited mouvement
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	while (!glfwWindowShouldClose(window)) {
 		float u_time = glfwGetTime();
