@@ -11,7 +11,7 @@
 #include <string>
 
 #include "shader.h"
-#include "../vbo_indexer.h"
+
 
 #define TINYPLY_IMPLEMENTATION
 //#include <tinyply.h>
@@ -20,6 +20,7 @@
 #include "../Light.h"
 #include "texture.h"
 #include "../controls.h"
+#include "../Mesh.h"
 
 using namespace std;
 
@@ -110,82 +111,7 @@ GLuint loadBMP_custom(const char* path) {
 	return textureID;
 }
 
-bool loadOBJ(char* path, std::vector<glm::vec3>& out_vertices, std::vector<glm::vec2>& out_uvs, std::vector<glm::vec3>& out_normals) {
-	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-	std::vector<glm::vec3> temp_vertices;
-	std::vector<glm::vec2> temp_uvs;
-	std::vector<glm::vec3> temp_normals;
 
-	FILE* file = fopen(path, "r");
-	if (file == NULL) {
-		printf("Impossible to open the file !\n");
-		return false;
-	}
-
-	while (1) {
-		char lineHeader[128];
-		// read the first word of the line
-		int res = fscanf(file, "%s", lineHeader);
-		if (res == EOF)
-			break; // EOF = End Of File. Quit the loop.
-
-		if (strcmp(lineHeader, "v") == 0) {
-			glm::vec3 vertex;
-			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			temp_vertices.push_back(vertex);
-		} else if (strcmp(lineHeader, "vt") == 0) {
-			glm::vec2 uv;
-			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			temp_uvs.push_back(uv);
-		} else if (strcmp(lineHeader, "vn") == 0) {
-			glm::vec3 normal;
-			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
-			temp_normals.push_back(normal);
-		} else if (strcmp(lineHeader, "f") == 0) {
-			std::string vertex1, vertex2, vertex3;
-			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
-			if (matches != 9) {
-				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-				return false;
-			}
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices.push_back(uvIndex[0]);
-			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[2]);
-		} else {
-			// Probably a comment, eat up the rest of the line
-			char stupidBuffer[1000];
-			fgets(stupidBuffer, 1000, file);
-		}
-	}
-
-	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
-
-		// Get the indices of its attributes
-		unsigned int vertexIndex = vertexIndices[i];
-		unsigned int uvIndex = uvIndices[i];
-		unsigned int normalIndex = normalIndices[i];
-
-		// Get the attributes thanks to the index
-		glm::vec3 vertex = temp_vertices[vertexIndex - 1];
-		glm::vec2 uv = temp_uvs[uvIndex - 1];
-		glm::vec3 normal = temp_normals[normalIndex - 1];
-
-		// Put the attributes in buffers
-		out_vertices.push_back(vertex);
-		out_uvs.push_back(uv);
-		out_normals.push_back(normal);
-
-	}
-	fclose(file);
-	return true;
-}
 
 void computeTangentBasis(
 	// inputs
@@ -285,60 +211,64 @@ int main(void) {
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
 
-#pragma region monkey buffers
+#pragma region lego buffers
 
-	std::vector<glm::vec3> inmonkey_vertices;
-	std::vector<glm::vec2> inmonkey_uvs;
-	std::vector<glm::vec3> inmonkey_normals;
+	/*std::vector<glm::vec3> inlego_vertices;
+	std::vector<glm::vec2> inlego_uvs;
+	std::vector<glm::vec3> inlego_normals;
 
-	std::vector<glm::vec3> monkey_vertices;
-	std::vector<glm::vec2> monkey_uvs;
-	std::vector<glm::vec3> monkey_normals;
+	std::vector<glm::vec3> lego_vertices;
+	std::vector<glm::vec2> lego_uvs;
+	std::vector<glm::vec3> lego_normals;
 
-	std::vector<glm::vec3> monkey_color;
+	std::vector<glm::vec3> lego_color;
 
-	std::vector<unsigned short> indicesMonkey;
+	std::vector<unsigned short> indicesLego;
+	*/
+	Mesh legoMesh = Mesh();
+	legoMesh.loadMesh("resources/models/lego2.obj", &legoMesh, false, glm::vec3(0, 0, 1));
 
-	if (!loadOBJ("resources/models/monkey.obj", inmonkey_vertices, inmonkey_uvs, inmonkey_normals)) {
-		std::cout << "Can't load monkey :(";
+	/*
+	if (!loadOBJ("resources/models/lego2.obj", inlego_vertices, inlego_uvs, inlego_normals)) {
+		std::cout << "Can't load lego :(";
 		return -1;
 	}
 
-	indexVBO(inmonkey_vertices, inmonkey_uvs, inmonkey_normals, indicesMonkey, monkey_vertices, monkey_uvs, monkey_normals);
+	indexVBO(inlego_vertices, inlego_uvs, inlego_normals, indicesLego, lego_vertices, lego_uvs, lego_normals);
 
-	for (int i = 0; i < monkey_vertices.size(); i++) {
-		monkey_color.push_back(glm::vec3(0.7, 0.5, 0.1));
+	for (int i = 0; i < lego_vertices.size(); i++) {
+		lego_color.push_back(glm::vec3(0.7, 0.5, 0.1));
 	}
 
-	GLuint monkey_vertexbuffer;
-	glGenBuffers(1, &monkey_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_vertices.size() * sizeof(glm::vec3), &monkey_vertices[0], GL_STATIC_DRAW);
+	GLuint lego_vertexbuffer;
+	glGenBuffers(1, &lego_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego_vertices.size() * sizeof(glm::vec3), &lego_vertices[0], GL_STATIC_DRAW);
 
-	GLuint monkey_uvbuffer;
-	glGenBuffers(1, &monkey_uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_uvs.size() * sizeof(glm::vec2), &monkey_uvs[0], GL_STATIC_DRAW);
+	GLuint lego_uvbuffer;
+	glGenBuffers(1, &lego_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego_uvs.size() * sizeof(glm::vec2), &lego_uvs[0], GL_STATIC_DRAW);
 
-	GLuint monkey_normalbuffer;
-	glGenBuffers(1, &monkey_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_normals.size() * sizeof(glm::vec3), &monkey_normals[0], GL_STATIC_DRAW);
+	GLuint lego_normalbuffer;
+	glGenBuffers(1, &lego_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego_normals.size() * sizeof(glm::vec3), &lego_normals[0], GL_STATIC_DRAW);
 
-	GLuint monkey_elementbuffer;
-	glGenBuffers(1, &monkey_elementbuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, monkey_elementbuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesMonkey.size() * sizeof(unsigned short), &indicesMonkey[0], GL_STATIC_DRAW);
+	GLuint lego_elementbuffer;
+	glGenBuffers(1, &lego_elementbuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lego_elementbuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesLego.size() * sizeof(unsigned short), &indicesLego[0], GL_STATIC_DRAW);
 
-	GLuint monkey_colorbuffer;
-	glGenBuffers(1, &monkey_colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_color.size() * sizeof(glm::vec3), &monkey_color[0], GL_STATIC_DRAW);
-
+	GLuint lego_colorbuffer;
+	glGenBuffers(1, &lego_colorbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego_colorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego_color.size() * sizeof(glm::vec3), &lego_color[0], GL_STATIC_DRAW);
+	*/
 #pragma endregion
 #pragma region cube buffers
 
-	GLuint normalTexture = loadBMP_custom("./img/normal.bmp");
+	/*GLuint normalTexture = loadBMP_custom("./img/normal.bmp");
 
 	GLuint normalTextureID = glGetUniformLocation(program, "normalTexture");
 
@@ -400,6 +330,7 @@ int main(void) {
 	glGenBuffers(1, &cube_bitangentbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, cube_bitangentbuffer);
 	glBufferData(GL_ARRAY_BUFFER, cube_bitangents.size() * sizeof(glm::vec3), &cube_bitangents[0], GL_STATIC_DRAW);
+	*/
 #pragma endregion
 
 	// Enable depth test
@@ -435,40 +366,38 @@ int main(void) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#pragma region draw monkey
+#pragma region draw lego
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
+		/*glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, lego_vertexbuffer);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		/*glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_uvbuffer);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);*/
-
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, lego_normalbuffer);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		glEnableVertexAttribArray(3);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_colorbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, lego_colorbuffer);
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		// Draw the triangle !
-		//glDrawArrays(GL_TRIANGLES, 0, monkey_vertices.size() * sizeof(glm::vec3));
+		//glDrawArrays(GL_TRIANGLES, 0, lego_vertices.size() * sizeof(glm::vec3));
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, monkey_elementbuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lego_elementbuffer);
 
 
 		// Draw the triangles !
-		glDrawElements(GL_TRIANGLES, indicesMonkey.size(), GL_UNSIGNED_SHORT, (void*)0);
+		glDrawElements(GL_TRIANGLES, indicesLego.size(), GL_UNSIGNED_SHORT, (void*)0);
 
 		glDisableVertexAttribArray(0);
 		//glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(3);
+		*/
 #pragma endregion
 
 #pragma region cube
+		/*
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, Texture);
 		glUniform1i(TextureID, 0);
@@ -509,6 +438,7 @@ int main(void) {
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(4);
 		glDisableVertexAttribArray(5);
+		*/
 #pragma endregion
 
 		computeMatricesFromInputs(window);
@@ -522,7 +452,7 @@ int main(void) {
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvp[0][0]);
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-		glUniformMatrix3fv(ModelView3x3MatrixID, 1, GL_FALSE, &ModelView3x3Matrix[0][0]);
+		//glUniformMatrix3fv(ModelView3x3MatrixID, 1, GL_FALSE, &ModelView3x3Matrix[0][0]);
 		glUniform3f(LightPositionID, light.position.x, light.position.y, light.position.z);
 		glUniform3f(LightColorID, light.color.r, light.color.g, light.color.b);
 		glUniform1f(LightIntensityID, light.intensity);
