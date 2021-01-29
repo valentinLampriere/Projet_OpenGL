@@ -115,6 +115,8 @@ bool Mesh::loadMesh(char* path, Mesh* loadedMesh, bool reindexVertices) {
 		glBindBuffer(GL_ARRAY_BUFFER, this->bitangentbuffer);
 		glBufferData(GL_ARRAY_BUFFER, this->bitangents.size() * sizeof(glm::vec3), &this->bitangents[0], GL_STATIC_DRAW);
 	}
+
+	this->hasReindex = reindexVertices;
 }
 
 void Mesh::setColor(glm::vec3 color) {
@@ -134,9 +136,9 @@ void Mesh::drawMesh() {
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertexbuffer);
 	glVertexAttribPointer(VERTEX, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	glEnableVertexAttribArray(UV);
+	/*glEnableVertexAttribArray(UV);
 	glBindBuffer(GL_ARRAY_BUFFER, this->uvbuffer);
-	glVertexAttribPointer(UV, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(UV, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);*/
 
 	glEnableVertexAttribArray(NORMAL);
 	glBindBuffer(GL_ARRAY_BUFFER, this->normalbuffer);
@@ -148,13 +150,13 @@ void Mesh::drawMesh() {
 		glVertexAttribPointer(COLOR, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	}
 
-	glEnableVertexAttribArray(TANGENT);
+	/*glEnableVertexAttribArray(TANGENT);
 	glBindBuffer(GL_ARRAY_BUFFER, this->tangentbuffer);
 	glVertexAttribPointer(TANGENT, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	glEnableVertexAttribArray(BITANGENT);
 	glBindBuffer(GL_ARRAY_BUFFER, this->bitangentbuffer);
-	glVertexAttribPointer(BITANGENT, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(BITANGENT, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);*/
 
 
 	// Draw the triangle !
@@ -166,8 +168,11 @@ void Mesh::drawMesh() {
 	// Draw the triangles !
 	glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_SHORT, (void*)0);
 
-	glDisableVertexAttribArray(0);
-	//glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(3);
+	glDisableVertexAttribArray(VERTEX);
+	//glDisableVertexAttribArray(UV);
+	glDisableVertexAttribArray(NORMAL);
+	if (hasColor)
+		glDisableVertexAttribArray(COLOR);
+	//glDisableVertexAttribArray(TANGENT);
+	//glDisableVertexAttribArray(BITANGENT);
 }

@@ -226,7 +226,8 @@ int main(void) {
 	std::vector<unsigned short> indicesLego;
 	*/
 	Mesh legoMesh = Mesh();
-	legoMesh.loadMesh("resources/models/lego2.obj", &legoMesh, false, glm::vec3(0, 0, 1));
+	legoMesh.loadMesh("resources/models/lego2.obj", &legoMesh, false);
+	//legoMesh.setColor(glm::vec3(0, 0, 1));
 
 	/*
 	if (!loadOBJ("resources/models/lego2.obj", inlego_vertices, inlego_uvs, inlego_normals)) {
@@ -394,6 +395,9 @@ int main(void) {
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(3);
 		*/
+
+		legoMesh.drawMesh();
+
 #pragma endregion
 
 #pragma region cube
@@ -457,9 +461,9 @@ int main(void) {
 		glUniform3f(LightColorID, light.color.r, light.color.g, light.color.b);
 		glUniform1f(LightIntensityID, light.intensity);
 
-		glDisableVertexAttribArray(0);
+		/*glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(2);*/
 
 		
 		// Swap buffers
