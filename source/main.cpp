@@ -285,55 +285,55 @@ int main(void) {
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
 
-#pragma region monkey buffers
+#pragma region lego2 buffers
 
-	std::vector<glm::vec3> inmonkey_vertices;
-	std::vector<glm::vec2> inmonkey_uvs;
-	std::vector<glm::vec3> inmonkey_normals;
+	std::vector<glm::vec3> inlego2_vertices;
+	std::vector<glm::vec2> inlego2_uvs;
+	std::vector<glm::vec3> inlego2_normals;
 
-	std::vector<glm::vec3> monkey_vertices;
-	std::vector<glm::vec2> monkey_uvs;
-	std::vector<glm::vec3> monkey_normals;
+	std::vector<glm::vec3> lego2_vertices;
+	std::vector<glm::vec2> lego2_uvs;
+	std::vector<glm::vec3> lego2_normals;
 
-	std::vector<glm::vec3> monkey_color;
+	std::vector<glm::vec3> lego2_color;
 
-	std::vector<unsigned short> indicesMonkey;
+	std::vector<unsigned short> indicesLego2;
 
-	if (!loadOBJ("resources/models/monkey.obj", inmonkey_vertices, inmonkey_uvs, inmonkey_normals)) {
-		std::cout << "Can't load monkey :(";
+	if (!loadOBJ("resources/models/lego2.obj", inlego2_vertices, inlego2_uvs, inlego2_normals)) {
+		std::cout << "Can't load lego2 :(";
 		return -1;
 	}
 
-	indexVBO(inmonkey_vertices, inmonkey_uvs, inmonkey_normals, indicesMonkey, monkey_vertices, monkey_uvs, monkey_normals);
+	indexVBO(inlego2_vertices, inlego2_uvs, inlego2_normals, indicesLego2, lego2_vertices, lego2_uvs, lego2_normals);
 
-	for (int i = 0; i < monkey_vertices.size(); i++) {
-		monkey_color.push_back(glm::vec3(0.7, 0.5, 0.1));
+	for (int i = 0; i < lego2_vertices.size(); i++) {
+		lego2_color.push_back(glm::vec3(0.7, 0.5, 0.1));
 	}
 
-	GLuint monkey_vertexbuffer;
-	glGenBuffers(1, &monkey_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_vertices.size() * sizeof(glm::vec3), &monkey_vertices[0], GL_STATIC_DRAW);
+	GLuint lego2_vertexbuffer;
+	glGenBuffers(1, &lego2_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego2_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego2_vertices.size() * sizeof(glm::vec3), &lego2_vertices[0], GL_STATIC_DRAW);
 
-	GLuint monkey_uvbuffer;
-	glGenBuffers(1, &monkey_uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_uvs.size() * sizeof(glm::vec2), &monkey_uvs[0], GL_STATIC_DRAW);
+	GLuint lego2_uvbuffer;
+	glGenBuffers(1, &lego2_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego2_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego2_uvs.size() * sizeof(glm::vec2), &lego2_uvs[0], GL_STATIC_DRAW);
 
-	GLuint monkey_normalbuffer;
-	glGenBuffers(1, &monkey_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_normals.size() * sizeof(glm::vec3), &monkey_normals[0], GL_STATIC_DRAW);
+	GLuint lego2_normalbuffer;
+	glGenBuffers(1, &lego2_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego2_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego2_normals.size() * sizeof(glm::vec3), &lego2_normals[0], GL_STATIC_DRAW);
 
-	GLuint monkey_elementbuffer;
-	glGenBuffers(1, &monkey_elementbuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, monkey_elementbuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesMonkey.size() * sizeof(unsigned short), &indicesMonkey[0], GL_STATIC_DRAW);
+	GLuint lego2_elementbuffer;
+	glGenBuffers(1, &lego2_elementbuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lego2_elementbuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesLego2.size() * sizeof(unsigned short), &indicesLego2[0], GL_STATIC_DRAW);
 
-	GLuint monkey_colorbuffer;
-	glGenBuffers(1, &monkey_colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, monkey_colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, monkey_color.size() * sizeof(glm::vec3), &monkey_color[0], GL_STATIC_DRAW);
+	GLuint lego2_colorbuffer;
+	glGenBuffers(1, &lego2_colorbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, lego2_colorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, lego2_color.size() * sizeof(glm::vec3), &lego2_color[0], GL_STATIC_DRAW);
 
 #pragma endregion
 #pragma region cube buffers
@@ -363,7 +363,7 @@ int main(void) {
 	}
 	// Reset the position
 	for (int i = 0; i < incube_vertices.size(); i++) {
-		incube_vertices[i] += glm::vec3(0, -2, 0);
+		incube_vertices[i] += glm::vec3(0, -1, 0);
 	}
 
 	computeTangentBasis(incube_vertices, incube_uvs, incube_normals, incube_tangents, incube_bitangents);
@@ -435,32 +435,32 @@ int main(void) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#pragma region draw monkey
+#pragma region draw lego2
 
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, lego2_vertexbuffer);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		/*glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_uvbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, lego2_uvbuffer);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);*/
 
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, lego2_normalbuffer);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		glEnableVertexAttribArray(3);
-		glBindBuffer(GL_ARRAY_BUFFER, monkey_colorbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, lego2_colorbuffer);
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		// Draw the triangle !
-		//glDrawArrays(GL_TRIANGLES, 0, monkey_vertices.size() * sizeof(glm::vec3));
+		//glDrawArrays(GL_TRIANGLES, 0, lego2_vertices.size() * sizeof(glm::vec3));
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, monkey_elementbuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lego2_elementbuffer);
 
 
 		// Draw the triangles !
-		glDrawElements(GL_TRIANGLES, indicesMonkey.size(), GL_UNSIGNED_SHORT, (void*)0);
+		glDrawElements(GL_TRIANGLES, indicesLego2.size(), GL_UNSIGNED_SHORT, (void*)0);
 
 		glDisableVertexAttribArray(0);
 		//glDisableVertexAttribArray(1);
